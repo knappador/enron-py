@@ -64,7 +64,7 @@ def prep_test_ledger():
     liabilities.add(wells_fargo)
 
 
-@raises(KeyError)
+@raises(DefinitionError)
 def test_asset_not_defined():
     clear_all_definitions()
     Asset.get("EN")
@@ -244,7 +244,7 @@ def test_missing_asset_get_key_for_balance():
     ab["EN"]
 
 
-@raises(KeyError)
+@raises(DefinitionError)
 def test_missing_asset_set_key_for_balance():
     prep_test_assets()
     am = AssetAmount(asset=Asset.get("RON"), amount=1)
