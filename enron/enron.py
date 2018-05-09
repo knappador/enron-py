@@ -726,6 +726,7 @@ class DoubleEntry(AssetMath):
         if withdrawal is None:
             # TODO branch for deposit case separately
             assert deposit is None
+            # TODO rip these out with _auto_arg style coercion
             if type(src) is str:
                 src = Account.get(name=src)
             if type(dest) is str:
@@ -734,15 +735,10 @@ class DoubleEntry(AssetMath):
             assert type(dest) is Account
             if asset_amount is None:
                 assert amount is not None
-                if type(amount) is int:
-                    amount = D(amount)
-                elif type(amount) is str:
-                    amount = D(amount)
+                amount = _lossless_decimal(amount)
                 assert type(amount) is D
                 if asset is not None:
-                    if type(asset) is str:
-                        asset = Asset.get(asset)
-                    assert type(asset) is Asset
+                    asset = _auto_asset_arg(asset)
                 else:
                     assert src.asset == dest.asset
                     asset = src.asset
