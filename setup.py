@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(name="enron",
-      version="0.1dev1",
+      version="0.1.dev2",
       description="Type foundation for building strict accounting systems",
       keywords="bookkeeping accounting",
       url="https://github.com/knappador/enron-py",
