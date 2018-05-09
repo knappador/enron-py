@@ -3,7 +3,7 @@ import uuid
 from abc import ABCMeta, abstractmethod
 from decimal import Decimal as D
 from typing import TypeVar, Union, Optional, Sequence, List, AbstractSet, Mapping, \
-    Dict, Any
+    Dict, Any, Callable
 
 from enron.exceptions import AmountTypeError, AssetTypeError, DefinitionError
 
@@ -947,7 +947,7 @@ class GeneralLedger(BalanceMath):
         raise ValueError(
             "What are you doing?  We only need one ledger.  Add accounts!")
 
-    def require_transaction_context(fun):
+    def require_transaction_context(fun: Callable) -> Callable:
         def check_transaction_context(*args, **kwargs):
             if not GeneralLedger.transaction_lock._is_owned():
                 raise ValueError(
