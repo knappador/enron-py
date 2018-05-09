@@ -26,13 +26,13 @@ def _lossless_decimal(maybe_decimal):
 
 
 def _auto_asset_arg(arg: Union['Asset', str]) -> 'Asset':
-    if type(arg) is not Asset:
+    if not isinstance(arg, Asset):
         return Asset.get(arg)
     return arg
 
 
 def _auto_account_arg(arg: Union["Account", str]) -> "Account":
-    if type(arg) is not Account:
+    if not isinstance(arg, Account):
         return Account.get(arg)
     return arg
 
@@ -186,7 +186,7 @@ class AssetPair(metaclass=_AddSubscriptableMeta):
 
     @classmethod
     def get(cls, key):
-        if type(key) is not str:
+        if not isinstance(key, str):
             raise TypeError(
                 "Get asset pairs by str symbol.  Recieved {}".format(type(key)))
         return cls._pairs[key]
@@ -335,7 +335,7 @@ class AssetMath(BalanceMath):
     def as_asset_amounts(left: Any, right: Any) -> ('AssetAmount', 'AssetAmount'):
         left = left._as_asset_amount()
         if not issubclass(right.__class__, AssetMath):
-            if FLEXIBLE_ASSET_DECIMAL_MATH and type(right) is D:
+            if FLEXIBLE_ASSET_DECIMAL_MATH and isinstance(right, D):
                 right = left.asset.make_amount(right)
             else:
                 raise _bad_comparison(left, right)
@@ -430,7 +430,7 @@ class AssetBalance(dict, BalanceMath):
     '''A set of unlike values destined for a single purpose'''
 
     def __setitem__(self, asset: Asset, asset_amount: Union['AssetAmount', D]) -> None:
-        if type(asset_amount) is D:
+        if isinstance(asset, D):
             asset_amount = asset.make_amount(asset_amount)
         asset = _auto_asset_arg(asset)
 
@@ -586,7 +586,7 @@ class Account(AssetMath):
 
     @classmethod
     def get(cls, name: str) -> "Account":
-        if type(name) is str:
+        if isinstance(name, str):
             return cls._accounts[name]
         raise TypeError("Key must be a str.  Got {}".format(name))
 
@@ -616,7 +616,7 @@ class Account(AssetMath):
             asset = _auto_asset_arg(asset)
             amount = _lossless_decimal(amount)
             asset_amount = AssetAmount(asset=asset, amount=amount)
-        assert type(asset_amount) is AssetAmount
+        assert isinstance(asset_amount, AssetAmount)
 
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "asset", asset_amount.asset)
@@ -624,7 +624,7 @@ class Account(AssetMath):
 
     def _withdraw(self, account_entry):
         with GeneralLedger.transaction_lock:
-            assert type(account_entry) is AccountEntry
+            assert isinstance(account_entry, AccountEntry)
             assert account_entry.asset == self.asset
             assert account_entry.account is self
             object.__setattr__(
@@ -633,7 +633,7 @@ class Account(AssetMath):
 
     def _deposit(self, account_entry):
         with GeneralLedger.transaction_lock:
-            assert type(account_entry) is AccountEntry
+            assert isinstance(account_entry, AccountEntry)
             assert account_entry.asset == self.asset
             assert account_entry.account is self
             object.__setattr__(
@@ -675,20 +675,15 @@ class AccountEntry(AssetMath):
     def __init__(self, *, account, asset_amount=None, asset=None, amount=None):
         if asset_amount is None:
             if asset is not None:
-                if type(asset) is str:
-                    asset = Asset.get(asset)
+                asset = _auto_asset_arg(asset)
             else:
                 asset = account.asset
-
-            if type(amount) is int:
-                amount = D(amount)
-            elif type(amount) is str:
-                amount = D(amount)
+            amount = _lossless_decimal(amount)
             asset_amount = AssetAmount(asset=asset, amount=amount)
         else:
             assert asset is None and amount is None
-        assert type(account) is Account
-        assert type(asset_amount) is AssetAmount
+        assert isinstance(account, Account)
+        assert isinstance(asset_amount, AssetAmount)
         assert account.asset == asset_amount.asset
         object.__setattr__(self, "account", account)
         self._asset_amount = asset_amount
@@ -757,8 +752,8 @@ class DoubleEntry(AssetMath):
             assert type(asset_amount) is AssetAmount
             withdrawal = asset_amount.make_entry(account=src)
             deposit = asset_amount.make_entry(account=dest)
-        assert type(withdrawal) is AccountEntry
-        assert type(deposit) is AccountEntry
+        assert isinstance(withdrawal, AccountEntry)
+        assert isinstance(deposit, AccountEntry)
         assert deposit.account.asset == withdrawal.account.asset
         assert deposit.account is not withdrawal.account
         assert deposit.amount == withdrawal.amount
