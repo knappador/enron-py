@@ -83,7 +83,7 @@ class Asset(metaclass=_AddSubscriptableMeta):
     '''If ever we should take a bread from the turd bucket (aka toilet), the
     universal turd imbalance will teleport us to netherly toil's realm'''
     _assets = {}
-    __slots__ = ("symbol")
+    __slots__ = ("symbol",)
 
     @classmethod
     def define(cls, symbol: str) -> 'Asset':
