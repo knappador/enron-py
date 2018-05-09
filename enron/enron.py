@@ -20,7 +20,8 @@ def _lossless_decimal(maybe_decimal):
     if t is D:
         return maybe_decimal
     elif t is float:
-        raise AmountTypeError("Decimal accepts floats, but do so on your own, explicitly")
+        raise AmountTypeError("Decimal accepts floats, "
+                              "but do so on your own, explicitly")
     return D(maybe_decimal)  # throws type errors for non-coercible types
 
 
