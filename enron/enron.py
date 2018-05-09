@@ -433,7 +433,7 @@ class AssetBalance(dict, BalanceMath):
             asset_amount = asset.make_amount(asset_amount)
         asset = _auto_asset_arg(asset)
 
-        assert(asset == asset_amount.asset)
+        assert asset == asset_amount.asset
         super().__setitem__(asset, asset_amount)
 
     def __getitem__(self, asset: Asset) -> 'AssetAmount':
@@ -609,13 +609,13 @@ class Account(AssetMath):
         if _incorrectly:
             raise ValueError("Do not create accounts directly.  Call define")
         if asset_amount is None:
-            assert(asset) is not None
+            assert asset is not None
             if amount is None:
                 amount = D(0)
             asset = _auto_asset_arg(asset)
             amount = _lossless_decimal(amount)
             asset_amount = AssetAmount(asset=asset, amount=amount)
-        assert(type(asset_amount) is AssetAmount)
+        assert type(asset_amount) is AssetAmount
 
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "asset", asset_amount.asset)
@@ -623,18 +623,18 @@ class Account(AssetMath):
 
     def _withdraw(self, account_entry):
         with GeneralLedger.transaction_lock:
-            assert(type(account_entry) is AccountEntry)
-            assert(account_entry.asset == self.asset)
-            assert(account_entry.account is self)
+            assert type(account_entry) is AccountEntry
+            assert account_entry.asset == self.asset
+            assert account_entry.account is self
             object.__setattr__(
                 self, "amount", self.amount - account_entry.amount)
         return self.amount
 
     def _deposit(self, account_entry):
         with GeneralLedger.transaction_lock:
-            assert(type(account_entry) is AccountEntry)
-            assert(account_entry.asset == self.asset)
-            assert(account_entry.account is self)
+            assert type(account_entry) is AccountEntry
+            assert account_entry.asset == self.asset
+            assert account_entry.account is self
             object.__setattr__(
                 self, "amount", self.amount + account_entry.amount)
         return self.amount
@@ -685,10 +685,10 @@ class AccountEntry(AssetMath):
                 amount = D(amount)
             asset_amount = AssetAmount(asset=asset, amount=amount)
         else:
-            assert(asset is None and amount is None)
-        assert(type(account) is Account)
-        assert(type(asset_amount) is AssetAmount)
-        assert(account.asset == asset_amount.asset)
+            assert asset is None and amount is None
+        assert type(account) is Account
+        assert type(asset_amount) is AssetAmount
+        assert account.asset == asset_amount.asset
         object.__setattr__(self, "account", account)
         self._asset_amount = asset_amount
 
@@ -729,38 +729,38 @@ class DoubleEntry(AssetMath):
                  asset=None, amount=None):
         if withdrawal is None:
             # TODO branch for deposit case separately
-            assert(deposit is None)
+            assert deposit is None
             if type(src) is str:
                 src = Account.get(name=src)
             if type(dest) is str:
                 dest = Account.get(name=dest)
-            assert(type(src) is Account)
-            assert(type(dest) is Account)
+            assert type(src) is Account
+            assert type(dest) is Account
             if asset_amount is None:
-                assert(amount is not None)
+                assert amount is not None
                 if type(amount) is int:
                     amount = D(amount)
                 elif type(amount) is str:
                     amount = D(amount)
-                assert(type(amount) is D)
+                assert type(amount) is D
                 if asset is not None:
                     if type(asset) is str:
                         asset = Asset.get(asset)
-                    assert(type(asset) is Asset)
+                    assert type(asset) is Asset
                 else:
-                    assert(src.asset == dest.asset)
+                    assert src.asset == dest.asset
                     asset = src.asset
                 asset_amount = AssetAmount(asset=asset, amount=amount)
             else:
-                assert(asset is None and amount is None)
-            assert(type(asset_amount) is AssetAmount)
+                assert asset is None and amount is None
+            assert type(asset_amount) is AssetAmount
             withdrawal = asset_amount.make_entry(account=src)
             deposit = asset_amount.make_entry(account=dest)
-        assert(type(withdrawal) is AccountEntry)
-        assert(type(deposit) is AccountEntry)
-        assert(deposit.account.asset == withdrawal.account.asset)
-        assert(deposit.account is not withdrawal.account)
-        assert(deposit.amount == withdrawal.amount)
+        assert type(withdrawal) is AccountEntry
+        assert type(deposit) is AccountEntry
+        assert deposit.account.asset == withdrawal.account.asset
+        assert deposit.account is not withdrawal.account
+        assert deposit.amount == withdrawal.amount
         self.withdrawal = withdrawal
         self.deposit = deposit
 
@@ -793,8 +793,8 @@ class ExchangeEntry:
                  asset_amount: AssetAmount) -> None:
         src = _auto_account_arg(src)
         dest = _auto_account_arg(dest)
-        assert(rate.base == src.asset)
-        assert(rate.quote == dest.asset)
+        assert rate.base == src.asset
+        assert rate.quote == dest.asset
         if src.asset == asset_amount.asset:
             src_amount = asset_amount
             dest_amount = asset_amount * rate
@@ -844,7 +844,7 @@ class AccountGroup(BalanceMath):
         else:
             accounts = set()
         for a in accounts:
-            assert(type(a) is Account)
+            assert type(a) is Account
         ag = _class(name=name, accounts=accounts, _wrongly=False)
         self._groups[name] = ag
         return ag
@@ -931,13 +931,13 @@ class AutoAccountGroup(AccountGroup):
         return self._asset_map[asset]
 
     def add(self, account: Account) -> None:
-        assert(type(account) is Account)
-        assert(account.asset not in self._asset_map)
+        assert type(account) is Account
+        assert account.asset not in self._asset_map
         self.accounts.add(account)
         self._asset_map[account.asset] = account
 
     def remove(self, account: Account) -> None:
-        assert(type(account) is Account)
+        assert type(account) is Account
         self.accounts.remove(account)
         self._asset_map.pop(account.asset)
 
@@ -966,13 +966,13 @@ class GeneralLedger(BalanceMath):
     @classmethod
     @require_transaction_context
     def commit(self, double_entry: _DoubleEntryTypes):
-        assert(type(double_entry) in (DoubleEntry, ExchangeEntry))
+        assert type(double_entry) in (DoubleEntry, ExchangeEntry)
         self.commitments.append(double_entry)
 
     @classmethod
     @require_transaction_context
     def rollback(self, double_entry: _DoubleEntryTypes):
-        assert(type(double_entry) in (DoubleEntry, ExchangeEntry))
+        assert type(double_entry) in (DoubleEntry, ExchangeEntry)
         self.commitments.remove(double_entry)
 
     @classmethod
@@ -989,7 +989,7 @@ class GeneralLedger(BalanceMath):
     @classmethod
     @require_transaction_context
     def unrealize(self, double_entry: _DoubleEntryTypes):
-        assert(double_entry not in self.commitments)
+        assert double_entry not in self.commitments
         src = double_entry.withdrawal.account
         dest = double_entry.deposit.account
         # just reverse the deposit & withdrawal and it's the same as going backwards
@@ -1009,7 +1009,7 @@ class GeneralLedger(BalanceMath):
                     for ac in Account._accounts.values():
                         assets.add(ac.asset)
             else:
-                assert(asset is None)
+                assert asset is None
 
             ab = AssetBalance()
             for a in assets:
