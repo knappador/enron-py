@@ -12,7 +12,8 @@ class AmountTypeError(EnronError, TypeError):
     '''Passed an argument which couldn't be coerced losslessly to Decimal'''
 
     def __init__(self, *args, **kwargs):
-        super().__init__("Account amounts must be Decimal or losslessly coercible")
+        super().__init__("Account amounts must be Decimal or losslessly coercible",
+                         *args, **kwargs)
 
 
 class DefinitionError(EnronError, ValueError):
