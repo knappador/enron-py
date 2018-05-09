@@ -80,25 +80,51 @@ class _AddSubscriptableABC(metaclass=_AddSubscriptableABCMeta):
 
 
 class Asset(metaclass=_AddSubscriptableMeta):
-    '''If ever we should take a bread from the turd bucket (aka toilet), the
-    universal turd imbalance will teleport us to netherly toil's realm'''
+    '''
+    Assets should be defined once, having one internal symbol for each unique asset.
+    These could be currencies, equities, derivative etc.
+
+    Later you can provide maps via `AssetNameMap` to deal with varying host definitions.
+
+    Attributes:
+        symbol: (str): the internal symbol used for lookup and equality checking
+    '''
     _assets = {}
     __slots__ = ("symbol",)
 
     @classmethod
     def define(cls, symbol: str) -> 'Asset':
+        '''
+        Args:
+            symbol:  Your chosen internal symbol for this asset
+
+        Returns:
+            Created `Asset`.  Raises `DefinitionError` if re-definition attempted.
+        '''
         if symbol in cls._assets:
-            raise DefinitionError("Asset has already defined.")
+            raise DefinitionError("Asset has already been defined.")
         cls._assets[symbol] = Asset(symbol=symbol,
                                     _incorrectly=False)
         return cls._assets[symbol]
 
     @classmethod
     def get(cls, symbol: str) -> 'Asset':
+        '''
+        Get by symbol
+
+        Args:
+            symbol: Asset's symbol
+
+        Returns:
+            `Asset` if it exists, else raises `DefinitionError`
+        '''
+        if symbol not in cls._assets:
+            raise DefinitionError("No such asset exists")
         return cls._assets[symbol]
 
     @classmethod
     def _subscriptable_class(cls, key: str) -> 'Asset':
+        '''Provides Asset[name] lookup support'''
         return cls.get(key)
 
     def __init__(self, *, symbol: str, _incorrectly=True) -> None:
@@ -114,6 +140,7 @@ class Asset(metaclass=_AddSubscriptableMeta):
         raise _bad_comparison(self, other)
 
     def make_amount(self, amount=D(0)) -> 'AssetAmount':
+        '''Create `AssetAmount` from `Asset`'''
         # RTTC delegated to AssetAmount __init__
         return AssetAmount(asset=self, amount=amount)
 
@@ -128,6 +155,8 @@ class Asset(metaclass=_AddSubscriptableMeta):
 
     @classmethod
     def all_assets(cls) -> Dict[str, 'Asset']:
+        '''Returns:
+             Copy of the internal _assets dict so you can iterate over all possible Assets'''
         return cls._assets.copy()
 
 
@@ -160,6 +189,13 @@ class AssetPair(metaclass=_AddSubscriptableMeta):
 
     @classmethod
     def define(cls, *, base, quote):
+        """Pairs can be defined idempotently and represent that two assets can
+        be exchanged at some rate.
+        :param base: Base Asset, the one per X units of quote where X is the price / exchange rate
+        :param quote: Quote Asset, X units of quote buys one unit of base
+        :returns: Created or retrieved AssetPair
+
+        """
         base = _auto_asset_arg(base)
         quote = _auto_asset_arg(quote)
         internal_symbol = base.symbol + quote.symbol
