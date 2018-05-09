@@ -60,19 +60,19 @@ def _bad_comparison(one, another):
 class _AddSubscriptableMeta(type):
     '''Hackish.  Adds index support but without infecting all subclasses'''
 
-    def __getitem__(self, key):
-        if hasattr(self, "_subscriptable_class"):
-            return self._subscriptable_class(key)
-        raise TypeError("{} is not subscriptable".format(type(self)))
+    def __getitem__(cls, key):
+        if hasattr(cls, "_subscriptable_class"):
+            return cls._subscriptable_class(key)
+        raise TypeError("{} is not subscriptable".format(type(cls)))
 
 
 class _AddSubscriptableABCMeta(ABCMeta):
     '''Hackish.  Adds index support but without infecting all subclasses'''
 
-    def __getitem__(self, key):
-        if hasattr(self, "_subscriptable_class"):
-            return self._subscriptable_class(key)
-        raise TypeError("{} is not subscriptable".format(type(self)))
+    def __getitem__(cls, key):
+        if hasattr(cls, "_subscriptable_class"):
+            return cls._subscriptable_class(key)
+        raise TypeError("{} is not subscriptable".format(type(cls)))
 
 
 class _AddSubscriptableABC(metaclass=_AddSubscriptableABCMeta):
@@ -86,20 +86,20 @@ class Asset(metaclass=_AddSubscriptableMeta):
     __slots__ = ("symbol")
 
     @classmethod
-    def define(self, symbol: str) -> 'Asset':
-        if symbol in self._assets:
+    def define(cls, symbol: str) -> 'Asset':
+        if symbol in cls._assets:
             raise DefinitionError("Asset has already defined.")
-        self._assets[symbol] = Asset(symbol=symbol,
-                                     _incorrectly=False)
-        return self._assets[symbol]
+        cls._assets[symbol] = Asset(symbol=symbol,
+                                    _incorrectly=False)
+        return cls._assets[symbol]
 
     @classmethod
-    def get(self, symbol: str) -> 'Asset':
-        return self._assets[symbol]
+    def get(cls, symbol: str) -> 'Asset':
+        return cls._assets[symbol]
 
     @classmethod
-    def _subscriptable_class(self, key: str) -> 'Asset':
-        return self.get(key)
+    def _subscriptable_class(cls, key: str) -> 'Asset':
+        return cls.get(key)
 
     def __init__(self, *, symbol: str, _incorrectly=True) -> None:
         if _incorrectly:
@@ -127,8 +127,8 @@ class Asset(metaclass=_AddSubscriptableMeta):
         return hash((self.symbol, Asset))
 
     @classmethod
-    def all_assets(self) -> Dict[str, 'Asset']:
-        return self._assets.copy()
+    def all_assets(cls) -> Dict[str, 'Asset']:
+        return cls._assets.copy()
 
 
 class AssetNameMap:
@@ -159,18 +159,18 @@ class AssetPair(metaclass=_AddSubscriptableMeta):
     __slots__ = ("base", "quote", "symbol")
 
     @classmethod
-    def define(self, *, base, quote):
+    def define(cls, *, base, quote):
         base = _auto_asset_arg(base)
         quote = _auto_asset_arg(quote)
         internal_symbol = base.symbol + quote.symbol
-        if internal_symbol in self._pairs:
-            return self._pairs[internal_symbol]
+        if internal_symbol in cls._pairs:
+            return cls._pairs[internal_symbol]
         pair = AssetPair(_incorrectly=False,
                          base=base,
                          quote=quote,
                          symbol=internal_symbol)
 
-        self._pairs[internal_symbol] = pair
+        cls._pairs[internal_symbol] = pair
         return pair
 
     def __init__(self, *, base, quote, symbol, _incorrectly=True):
@@ -185,11 +185,11 @@ class AssetPair(metaclass=_AddSubscriptableMeta):
         return self.get(key)
 
     @classmethod
-    def get(self, key):
+    def get(cls, key):
         if type(key) is not str:
             raise TypeError(
                 "Get asset pairs by str symbol.  Recieved {}".format(type(key)))
-        return self._pairs[key]
+        return cls._pairs[key]
 
     def make_rate(self, rate: _DCoercibles) -> 'ExchangeRate':
         return ExchangeRate(pair=self, rate=rate)
@@ -209,8 +209,8 @@ class AssetPair(metaclass=_AddSubscriptableMeta):
         return hash((self.quote, self.base, AssetPair))
 
     @classmethod
-    def all_pairs(self):
-        return self._pairs.copy()
+    def all_pairs(cls):
+        return cls._pairs.copy()
 
 
 class PairNameMap:
@@ -570,24 +570,24 @@ class Account(AssetMath):
     __slots__ = ("name", "asset", "amount")
 
     @classmethod
-    def define(self, *, name: Optional[str] = None,
+    def define(cls, *, name: Optional[str] = None,
                asset: Optional[Union[Asset, str]] = None,
                amount: Optional[_DCoercibles] = None,
                asset_amount: Optional[AssetAmount] = None) -> 'Account':
-        name = _anonymous_name_if_none(target=self._accounts, name=name)
-        if name in self._accounts:
+        name = _anonymous_name_if_none(target=cls._accounts, name=name)
+        if name in cls._accounts:
             raise DefinitionError("Account with that name already exists")
-        self._accounts[name] = Account(name=name,
-                                       asset=asset,
-                                       amount=amount,
-                                       asset_amount=asset_amount,
-                                       _incorrectly=False)
-        return self._accounts[name]
+        cls._accounts[name] = Account(name=name,
+                                      asset=asset,
+                                      amount=amount,
+                                      asset_amount=asset_amount,
+                                      _incorrectly=False)
+        return cls._accounts[name]
 
     @classmethod
-    def get(self, name: str) -> "Account":
+    def get(cls, name: str) -> "Account":
         if type(name) is str:
-            return self._accounts[name]
+            return cls._accounts[name]
         raise TypeError("Key must be a str.  Got {}".format(name))
 
     @staticmethod
@@ -603,8 +603,8 @@ class Account(AssetMath):
         return [a for a in Account._accounts if a.asset == asset]
 
     @classmethod
-    def _subscriptable_class(self, key):
-        return self.get(key)
+    def _subscriptable_class(cls, key):
+        return cls.get(key)
 
     def __init__(self, *, name, asset=None, amount=None, asset_amount=None, _incorrectly=True):
         if _incorrectly:
@@ -831,14 +831,14 @@ class AccountGroup(BalanceMath):
     _groups = {}
 
     @classmethod
-    def define(self, *,
+    def define(cls, *,
                name: Optional[str] = None,
                accounts: Optional[Sequence[Account]] = None,
                _class: Any = None):
         if _class is None:
-            _class = self
-        name = _anonymous_name_if_none(target=self._groups, name=name)
-        if name in self._groups:
+            _class = cls
+        name = _anonymous_name_if_none(target=cls._groups, name=name)
+        if name in cls._groups:
             raise DefinitionError("AccountGroup with that name already exists")
         if accounts is not None:
             accounts = set(accounts)
@@ -847,16 +847,16 @@ class AccountGroup(BalanceMath):
         for a in accounts:
             assert type(a) is Account
         ag = _class(name=name, accounts=accounts, _wrongly=False)
-        self._groups[name] = ag
+        cls._groups[name] = ag
         return ag
 
     @classmethod
-    def get(self, name: str) -> 'AccountGroup':
-        return self._groups[name]
+    def get(cls, name: str) -> 'AccountGroup':
+        return cls._groups[name]
 
     @classmethod
-    def _subscriptable_class(self, key: str) -> 'AccountGroup':
-        return self.get(key)
+    def _subscriptable_class(cls, key: str) -> 'AccountGroup':
+        return cls.get(key)
 
     def __init__(self, *,
                  name: str,
@@ -898,8 +898,8 @@ class AccountGroup(BalanceMath):
 class AutoAccountGroup(AccountGroup):
 
     @classmethod
-    def define(self, **kwargs):
-        kwargs["_class"] = self
+    def define(cls, **kwargs):
+        kwargs["_class"] = cls
         return super().define(**kwargs)
 
     def __init__(self, **kwargs):
@@ -966,31 +966,31 @@ class GeneralLedger(BalanceMath):
 
     @classmethod
     @require_transaction_context
-    def commit(self, double_entry: _DoubleEntryTypes):
+    def commit(cls, double_entry: _DoubleEntryTypes):
         assert type(double_entry) in (DoubleEntry, ExchangeEntry)
-        self.commitments.append(double_entry)
+        cls.commitments.append(double_entry)
 
     @classmethod
     @require_transaction_context
-    def rollback(self, double_entry: _DoubleEntryTypes):
+    def rollback(cls, double_entry: _DoubleEntryTypes):
         assert type(double_entry) in (DoubleEntry, ExchangeEntry)
-        self.commitments.remove(double_entry)
+        cls.commitments.remove(double_entry)
 
     @classmethod
     @require_transaction_context
-    def realize(self, double_entry: _DoubleEntryTypes):
+    def realize(cls, double_entry: _DoubleEntryTypes):
         src = double_entry.withdrawal.account
         dest = double_entry.deposit.account
         src._withdraw(double_entry.withdrawal)
         dest._deposit(double_entry.deposit)
         # Poof!  The double entry has been baked into the actual account values
-        if double_entry in self.commitments:
-            self.commitments.remove(double_entry)
+        if double_entry in cls.commitments:
+            cls.commitments.remove(double_entry)
 
     @classmethod
     @require_transaction_context
-    def unrealize(self, double_entry: _DoubleEntryTypes):
-        assert double_entry not in self.commitments
+    def unrealize(cls, double_entry: _DoubleEntryTypes):
+        assert double_entry not in cls.commitments
         src = double_entry.withdrawal.account
         dest = double_entry.deposit.account
         # just reverse the deposit & withdrawal and it's the same as going backwards
@@ -998,7 +998,7 @@ class GeneralLedger(BalanceMath):
         dest._withdraw(double_entry.deposit)
 
     @classmethod
-    def balance(self,
+    def balance(cls,
                 assets: Optional[Sequence[Asset]] = None,
                 asset: Optional[Asset] = None):
         with GeneralLedger.transaction_lock:
