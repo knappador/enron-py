@@ -1,5 +1,5 @@
 ![Liars inc.](https://user-images.githubusercontent.com/641139/39740027-c29a5498-52ce-11e8-9c89-acda215b9116.png "Our trademark lapsed because we tried to get rich by lying and went to jail")
-![Documentation Status](https://readthedocs.org/projects/enron/badge/?version=latest)](http://enron.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/enron/badge/?version=latest)](http://enron.readthedocs.io/en/latest/?badge=latest)
 
 # Enron
 Types for use in implementing and executing accounting strategies in memory.  This library is aimed a programmers who need to track, find, or lose (hide) money consistent with an accounting design.
