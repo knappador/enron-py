@@ -502,7 +502,7 @@ class ExchangeRate:
 
     def __rtruediv__(self, other):
         if not issubclass(other.__class__, AssetMath):
-            other = _lossless_decimal(other)                        
+            other = _lossless_decimal(other)
             return ExchangeRate(base=self.base,
                                 quote=self.quote,
                                 rate=other / self.rate)
