@@ -1,10 +1,10 @@
-import threading
 import uuid
 from abc import ABCMeta, abstractmethod
 from decimal import Decimal as D
 from typing import TypeVar, Union, Optional, Sequence, List, AbstractSet, Mapping, \
     Dict, Any, Callable
 
+from enron.accounting import Accounting
 from enron.exceptions import AmountTypeError, AssetTypeError, DefinitionError
 
 
@@ -660,7 +660,7 @@ class Account(AssetMath):
         object.__setattr__(self, "amount", asset_amount.amount)
 
     def _withdraw(self, account_entry):
-        with GeneralLedger.transaction_lock:
+        with Accountant.transaction_lock:
             assert isinstance(account_entry, AccountEntry)
             assert account_entry.asset == self.asset
             assert account_entry.account is self
@@ -669,7 +669,7 @@ class Account(AssetMath):
         return self.amount
 
     def _deposit(self, account_entry):
-        with GeneralLedger.transaction_lock:
+        with Accountant.transaction_lock:
             assert isinstance(account_entry, AccountEntry)
             assert account_entry.asset == self.asset
             assert account_entry.account is self
@@ -678,8 +678,8 @@ class Account(AssetMath):
         return self.amount
 
     def available(self):
-        with GeneralLedger.transaction_lock:
-            withdrawals = [c.withdrawal.amount for c in GeneralLedger.commitments
+        with Accountant.transaction_lock:
+            withdrawals = [c.withdrawal.amount for c in Accountant.commitments
                            if c.withdrawal.account is self]
             # do not include deposits as these are expected, not guaranteed,
             # and could be rolled back
@@ -903,7 +903,7 @@ class AccountGroup(BalanceMath):
         self.accounts.remove(account)
 
     def _as_asset_balance(self) -> AssetBalance:
-        with GeneralLedger.transaction_lock:
+        with Accountant.transaction_lock:
             ab = AssetBalance()
             for a in self.accounts:
                 if a.asset in ab:
@@ -972,56 +972,3 @@ class AutoAccountGroup(AccountGroup):
 
 
 _DoubleEntryTypes = TypeVar("_DoubleEntryTypes", DoubleEntry, ExchangeEntry)
-
-
-class GeneralLedger():
-    '''The lock on all transactions, The enforcer of all that may come to pass'''
-
-    commitments = []
-    transaction_lock = threading.RLock()
-
-    def __init__(self):
-        raise ValueError(
-            "What are you doing?  We only need one ledger.  Add accounts!")
-
-    def require_transaction_context(fun: Callable) -> Callable:
-        def check_transaction_context(*args, **kwargs):
-            if not GeneralLedger.transaction_lock._is_owned():
-                raise ValueError(
-                    "No active transaction.  `use with GeneralLedger.transaction_lock`")
-            return fun(*args, **kwargs)
-        return check_transaction_context
-
-    @classmethod
-    @require_transaction_context
-    def commit(cls, double_entry: _DoubleEntryTypes):
-        assert type(double_entry) in (DoubleEntry, ExchangeEntry)
-        cls.commitments.append(double_entry)
-
-    @classmethod
-    @require_transaction_context
-    def rollback(cls, double_entry: _DoubleEntryTypes):
-        assert type(double_entry) in (DoubleEntry, ExchangeEntry)
-        cls.commitments.remove(double_entry)
-
-    @classmethod
-    @require_transaction_context
-    def realize(cls, double_entry: _DoubleEntryTypes):
-        src = double_entry.withdrawal.account
-        dest = double_entry.deposit.account
-        src._withdraw(double_entry.withdrawal)
-        dest._deposit(double_entry.deposit)
-        # Poof!  The double entry has been baked into the actual account values
-        if double_entry in cls.commitments:
-            cls.commitments.remove(double_entry)
-
-    @classmethod
-    @require_transaction_context
-    def unrealize(cls, double_entry: _DoubleEntryTypes):
-        assert double_entry not in cls.commitments
-        src = double_entry.withdrawal.account
-        dest = double_entry.deposit.account
-        # just reverse the deposit & withdrawal and it's the same as going backwards
-        src._deposit(double_entry.withdrawal)
-        dest._withdraw(double_entry.deposit)
-

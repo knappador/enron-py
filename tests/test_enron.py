@@ -1,17 +1,19 @@
 from decimal import Decimal as D
-
-from enron.enron import Asset, AssetBalance, AssetAmount, Account, \
-    AccountEntry, DoubleEntry, GeneralLedger, ExchangeRate, ExchangeEntry, \
-    AccountGroup, AssetPair, AutoAccountGroup
-from enron.exceptions import AssetTypeError, AmountTypeError, DefinitionError
+import math
+import logging
 
 import nose.tools as nosetools
 from nose.tools import assert_true, assert_false, nottest
 from nose.tools import raises
 
-import math
+from enron import Asset, AssetBalance, AssetAmount, Account, \
+    AccountEntry, DoubleEntry, ExchangeRate, ExchangeEntry, \
+    AccountGroup, AssetPair, AutoAccountGroup
 
-import logging
+from enron.accounting import Accountant
+from enron.exceptions import AssetTypeError, AmountTypeError, DefinitionError
+
+
 logger = logging.getLogger()
 
 
@@ -484,8 +486,8 @@ def test_exchange_entry_creation_and_realization():
     nosetools.eq_(tde.withdrawal.amount, D(1))
     nosetools.eq_(tde.deposit.amount, D(2))
 
-    with GeneralLedger.transaction_lock:
-        GeneralLedger.realize(tde)
+    with Accountant.transaction_lock:
+        Accountant.realize(tde)
     nosetools.eq_(pb, foo.make_amount(-1))
     nosetools.eq_(sofa, bar.make_amount(2))
 
@@ -525,9 +527,9 @@ def test_account_group_str_repr():
 
 
 def test_asset_ledger_context_management():
-    with GeneralLedger.transaction_lock:
+    with Accountant.transaction_lock:
         pass
-    assert_false(GeneralLedger.transaction_lock._is_owned())
+    assert_false(Accountant.transaction_lock._is_owned())
 
 
 def test_asset_balance_comparisons():
@@ -548,13 +550,13 @@ def test_commit_and_rollback_transaction():
     ipo_entry = DoubleEntry(src="shareholder_equity",
                             dest="equipment",
                             asset_amount=ipo_amount)
-    with GeneralLedger.transaction_lock:
-        GeneralLedger.commit(ipo_entry)
+    with Accountant.transaction_lock:
+        Accountant.commit(ipo_entry)
 
     # Network failed.  Remove the committed amount to free it back up.
 
-    with GeneralLedger.transaction_lock:
-        GeneralLedger.rollback(ipo_entry)
+    with Accountant.transaction_lock:
+        Accountant.rollback(ipo_entry)
 
 
 def test_accounts_balance_to_zero():
@@ -571,9 +573,9 @@ def test_accounts_balance_to_zero():
     loan_entry = DoubleEntry(
         src=liabilities, dest=assets, asset_amount=loan_amount)
 
-    with GeneralLedger.transaction_lock:
-        GeneralLedger.realize(ipo_entry)
-        GeneralLedger.realize(loan_entry)
+    with Accountant.transaction_lock:
+        Accountant.realize(ipo_entry)
+        Accountant.realize(loan_entry)
 
     assert_true(assets + liabilities + equity == D(0))
 
@@ -607,9 +609,9 @@ def test_accounting_equation_with_groups():
                              dest=cash,
                              asset_amount=loan_amount)
 
-    with GeneralLedger.transaction_lock:
-        GeneralLedger.realize(ipo_entry)
-        GeneralLedger.realize(loan_entry)
+    with Accountant.transaction_lock:
+        Accountant.realize(ipo_entry)
+        Accountant.realize(loan_entry)
 
     assert_true(assets + liabilities + equity ==
                 AssetAmount(asset="USD", amount=D(0)))
@@ -622,7 +624,7 @@ def test_cannot_realize_without_lock():
     ipo_entry = DoubleEntry(src="shareholder_equity",
                             dest="equipment",
                             asset_amount=ipo_amount)
-    GeneralLedger.realize(ipo_entry)
+    Accountant.realize(ipo_entry)
 
 
 @raises(ValueError)
@@ -632,7 +634,7 @@ def test_cannot_commit_without_lock():
     ipo_entry = DoubleEntry(src="shareholder_equity",
                             dest="equipment",
                             asset_amount=ipo_amount)
-    GeneralLedger.commit(ipo_entry)
+    Accountant.commit(ipo_entry)
 
 
 @raises(ValueError)
@@ -642,11 +644,11 @@ def test_cannot_unrealize_without_lock():
     ipo_entry = DoubleEntry(src="shareholder_equity",
                             dest="equipment",
                             asset_amount=ipo_amount)
-    with GeneralLedger.transaction_lock:
-        GeneralLedger.realize(ipo_entry)
+    with Accountant.transaction_lock:
+        Accountant.realize(ipo_entry)
 
     # Transaction fell through in real life.  Let's revert.
-    GeneralLedger.unrealize(ipo_entry)
+    Accountant.unrealize(ipo_entry)
 
 
 @raises(ValueError)
@@ -656,13 +658,13 @@ def tried_to_roll_back_committed_transaction():
     ipo_entry = DoubleEntry(src="shareholder_equity",
                             dest="equipment",
                             asset_amount=ipo_amount)
-    with GeneralLedger.transaction_lock:
-        GeneralLedger.realize(ipo_entry)
+    with Accountant.transaction_lock:
+        Accountant.realize(ipo_entry)
 
     # oops, network failed.  Better roll it back.
 
-    with GeneralLedger.transaction_lock:
-        GeneralLedger.rollback(ipo_entry)
+    with Accountant.transaction_lock:
+        Accountant.rollback(ipo_entry)
 
 
 def test_anon_account_def():
