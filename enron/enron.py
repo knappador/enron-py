@@ -1,18 +1,16 @@
 import uuid
 from abc import ABCMeta, abstractmethod
 from decimal import Decimal as D
-from typing import TypeVar, Union, Optional, Sequence, List, AbstractSet, Mapping, \
-    Dict, Any, Callable
+from typing import Union, Optional, Sequence, List, AbstractSet, Mapping, \
+    Dict, Any
 
-from enron.accounting import Accounting
+from enron.accounting import Accountant
 from enron.exceptions import AmountTypeError, AssetTypeError, DefinitionError
+from enron.typevars import _DCoercibles
 
 
 FLEXIBLE_QUOTE_MATH = True
 FLEXIBLE_ASSET_DECIMAL_MATH = True
-
-
-_DCoercibles = TypeVar("_DCoercibles", D, str, int)
 
 
 def _lossless_decimal(maybe_decimal):
@@ -969,6 +967,3 @@ class AutoAccountGroup(AccountGroup):
         assert type(account) is Account
         self.accounts.remove(account)
         self._asset_map.pop(account.asset)
-
-
-_DoubleEntryTypes = TypeVar("_DoubleEntryTypes", DoubleEntry, ExchangeEntry)
