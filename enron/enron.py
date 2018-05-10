@@ -974,7 +974,7 @@ class AutoAccountGroup(AccountGroup):
 _DoubleEntryTypes = TypeVar("_DoubleEntryTypes", DoubleEntry, ExchangeEntry)
 
 
-class GeneralLedger(BalanceMath):
+class GeneralLedger():
     '''The lock on all transactions, The enforcer of all that may come to pass'''
 
     commitments = []
@@ -1025,28 +1025,3 @@ class GeneralLedger(BalanceMath):
         src._deposit(double_entry.withdrawal)
         dest._withdraw(double_entry.deposit)
 
-    @classmethod
-    def balance(cls,
-                assets: Optional[Sequence[Asset]] = None,
-                asset: Optional[Asset] = None):
-        with GeneralLedger.transaction_lock:
-            if assets is None:
-                assets = set()
-                if asset is not None:
-                    assets.add(asset)
-                else:
-                    for ac in Account._accounts.values():
-                        assets.add(ac.asset)
-            else:
-                assert asset is None
-
-            ab = AssetBalance()
-            for a in assets:
-                balance = D(0)
-                for ac in [ac for ac in Account._accounts.values() if ac.asset == a]:
-                    balance += ac.amount
-                ab[a] = a.make_amount(amount=balance)
-            return ab
-
-    def _as_asset_balance(self):
-        return self.balance()

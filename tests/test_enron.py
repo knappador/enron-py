@@ -544,7 +544,7 @@ def test_commit_and_rollback_transaction():
         GeneralLedger.rollback(ipo_entry)
 
 
-def test_entries_balance_to_zero():
+def test_accounts_balance_to_zero():
     clear_all_definitions()
     Asset.define("USD")
     assets = Account.define(name="Assets", asset="USD")
@@ -562,7 +562,7 @@ def test_entries_balance_to_zero():
         GeneralLedger.realize(ipo_entry)
         GeneralLedger.realize(loan_entry)
 
-    assert_true(GeneralLedger.balance()[Asset["USD"]].amount == D(0))
+    assert_true(assets + liabilities + equity == D(0))
 
 
 def test_accounting_equation_with_groups():
@@ -598,7 +598,6 @@ def test_accounting_equation_with_groups():
         GeneralLedger.realize(ipo_entry)
         GeneralLedger.realize(loan_entry)
 
-    assert_true(GeneralLedger.balance()[Asset["USD"]].amount == D(0))
     assert_true(assets + liabilities + equity ==
                 AssetAmount(asset="USD", amount=D(0)))
 
