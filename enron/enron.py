@@ -295,7 +295,8 @@ class BalanceMath(_AddSubscriptableABC):
 
     def __eq__(self, other):
         if (issubclass(self.__class__, AssetMath)
-                and issubclass(other.__class__, AssetMath)):
+                and (isinstance(other, D) or
+                     issubclass(other.__class__, AssetMath))):
             left, right = AssetMath.as_asset_amounts(self, other)
             if not left.asset == right.asset:
                 raise AssetTypeError(
