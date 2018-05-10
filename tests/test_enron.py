@@ -214,6 +214,19 @@ def test_asset_math():
     nosetools.eq_(+(am0 - am2), am2)
 
 
+def test_flexible_asset_math():
+    prep_test_assets()
+    foo = Asset.get("EN")
+
+    nosetools.eq_(foo.make_amount(D(1)) + D(1), D(2))
+    nosetools.eq_(foo.make_amount(D(1)) - D(1), D(0))
+    nosetools.eq_(foo.make_amount(D(2)) * D(2), D(4))
+    nosetools.eq_(foo.make_amount(D(2)) ** D(3), D(8))
+    nosetools.eq_(foo.make_amount(D(3)) / D(3), D(1))
+    nosetools.eq_(foo.make_amount(D(5)) // D(2), D(2))
+    nosetools.eq_(foo.make_amount(D(5)) % D(3), D(2))
+
+
 def test_asset_amount_str_and_repr():
     prep_test_assets()
     am = AssetAmount(asset="EN", amount=200)
